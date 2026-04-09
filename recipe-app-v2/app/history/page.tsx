@@ -74,12 +74,12 @@ export default function RecipeHistoryPage() {
   };
 
   const getUniqueCuisines = (): string[] => {
-    const cuisines = new Set(recipes.map(r => r.cuisine).filter(Boolean));
+    const cuisines = new Set(recipes.map(r => r.cuisine).filter((c): c is string => !!c));
     return Array.from(cuisines).sort();
   };
 
   const getUniqueMealTypes = (): string[] => {
-    const mealTypes = new Set(recipes.map(r => r.mealType).filter(Boolean));
+    const mealTypes = new Set(recipes.map(r => r.mealType).filter((m): m is string => !!m));
     return Array.from(mealTypes).sort();
   };
 

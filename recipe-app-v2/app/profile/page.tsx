@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { UserProfile } from '../../types';
+import { UserProfile, DietType, SpiceLevel, CookingGoal } from '../../types';
 import { apiClient } from '../../lib/api-client';
 
 export default function ProfilePage() {
@@ -123,7 +123,7 @@ export default function ProfilePage() {
                 <label>Diet Preference</label>
                 <select
                   value={editedProfile.dietPreference || ''}
-                  onChange={(e) => setEditedProfile({ ...editedProfile, dietPreference: e.target.value })}
+                  onChange={(e) => setEditedProfile({ ...editedProfile, dietPreference: e.target.value as DietType })}
                 >
                   <option value="Vegetarian">Vegetarian</option>
                   <option value="Non-Vegetarian">Non-Vegetarian</option>
@@ -136,7 +136,7 @@ export default function ProfilePage() {
                 <label>Spice Level</label>
                 <select
                   value={editedProfile.spiceLevel || ''}
-                  onChange={(e) => setEditedProfile({ ...editedProfile, spiceLevel: e.target.value })}
+                  onChange={(e) => setEditedProfile({ ...editedProfile, spiceLevel: e.target.value as SpiceLevel })}
                 >
                   <option value="Mild">Mild</option>
                   <option value="Medium">Medium</option>
@@ -149,7 +149,7 @@ export default function ProfilePage() {
                 <label>Cooking Goal</label>
                 <select
                   value={editedProfile.cookingGoal || ''}
-                  onChange={(e) => setEditedProfile({ ...editedProfile, cookingGoal: e.target.value })}
+                  onChange={(e) => setEditedProfile({ ...editedProfile, cookingGoal: e.target.value as CookingGoal })}
                 >
                   <option value="Taste & Indulgence">Taste & Indulgence</option>
                   <option value="Fitness & Health">Fitness & Health</option>

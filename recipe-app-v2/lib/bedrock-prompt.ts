@@ -11,7 +11,7 @@ export function buildEnhancedBedrockPrompt(formState: RecipeFormState): string {
     mealType,
     cuisine,
     cookingStyle,
-    availableAppliances,
+    appliances,
     pantryStaples,
     spiceLevel,
     healthGoal,
@@ -19,9 +19,12 @@ export function buildEnhancedBedrockPrompt(formState: RecipeFormState): string {
     dietaryRestrictions,
   } = formState;
 
+  // Parse ingredients string into array
+  const ingredientsArray = ingredients.split(',').map(i => i.trim()).filter(i => i);
+
   // Build appliances list
-  const appliancesText = availableAppliances.length > 0
-    ? availableAppliances.join(', ')
+  const appliancesText = appliances.length > 0
+    ? appliances.join(', ')
     : 'standard kitchen equipment';
 
   // Build pantry staples list (only include those that are available)
@@ -33,7 +36,7 @@ export function buildEnhancedBedrockPrompt(formState: RecipeFormState): string {
     : 'none specified';
 
   // Build dietary restrictions text
-  const restrictionsText = dietaryRestrictions.length > 0
+  const restrictionsText = dietaryRestrictions && dietaryRestrictions.length > 0
     ? dietaryRestrictions.join(', ')
     : 'none';
 
@@ -48,7 +51,7 @@ export function buildEnhancedBedrockPrompt(formState: RecipeFormState): string {
 - Health goal: ${healthGoal}
 
 **Available Resources:**
-- Main ingredients: ${ingredients.join(', ')}
+- Main ingredients: ${ingredientsArray.join(', ')}
 - Available appliances: ${appliancesText}
 - Pantry staples available: ${staplesText}
 

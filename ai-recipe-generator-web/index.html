@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Recipe Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+            margin: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        .auth-section, .recipe-section {
+            margin-bottom: 30px;
+        }
+        
+        .auth-section h2, .recipe-section h2 {
+            color: #444;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+        
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .recipe-output {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            font-family: 'Georgia', serif;
+            line-height: 1.6;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .user-info {
+            background-color: #e8f4f8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .logout-btn {
+            background: #dc3545;
+            font-size: 14px;
+            padding: 8px 16px;
+        }
+        
+        .logout-btn:hover {
+            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍳 AI Recipe Generator</h1>
+            <p>Create delicious recipes with artificial intelligence</p>
+        </div>
+        
+        <!-- Authentication Section -->
+        <div id="authSection" class="auth-section">
+            <h2>🔐 Sign In</h2>
+            
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" placeholder="Enter your email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" placeholder="Enter your password" required>
+            </div>
+            
+            <button class="btn" onclick="login()">Sign In</button>
+            <button class="btn" onclick="register()">Create Account</button>
+            
+            <div id="authStatus"></div>
+        </div>
+        
+        <!-- Email Verification Section (hidden initially) -->
+        <div id="verificationSection" class="auth-section hidden">
+            <h2>📧 Verify Your Email</h2>
+            <p>We've sent a verification code to your email address. Please enter it below:</p>
+            
+            <div class="form-group">
+                <label for="verificationCode">Verification Code:</label>
+                <input type="text" id="verificationCode" placeholder="Enter 6-digit code" maxlength="6" required>
+            </div>
+            
+            <button class="btn" onclick="confirmEmail()">Verify Email</button>
+            <button class="btn" onclick="resendCode()">Resend Code</button>
+            <button class="btn" onclick="backToAuth()">Back to Sign In</button>
+            
+            <div id="verificationStatus"></div>
+        </div>
+        
+        <!-- User Info Section (hidden initially) -->
+        <div id="userSection" class="user-info hidden">
+            <p>Welcome, <span id="userEmail"></span>!</p>
+            <button class="btn logout-btn" onclick="logout()">Sign Out</button>
+        </div>
+        
+        <!-- Recipe Generation Section (hidden initially) -->
+        <div id="recipeSection" class="recipe-section hidden">
+            <h2>🤖 Generate Recipe</h2>
+            
+            <div class="form-group">
+                <label for="ingredients">Ingredients (comma-separated):</label>
+                <input type="text" id="ingredients" placeholder="e.g., chicken, rice, vegetables, garlic" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="preferences">Preferences & Dietary Requirements:</label>
+                <textarea id="preferences" placeholder="e.g., healthy, vegetarian, quick and easy, low-carb, spicy"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="servings">Number of Servings:</label>
+                <input type="number" id="servings" value="4" min="1" max="12">
+            </div>
+            
+            <button class="btn" onclick="generateRecipe()">
+                <span id="generateText">Generate Recipe</span>
+                <span id="generateLoading" class="loading hidden"></span>
+            </button>
+            
+            <div id="recipeStatus"></div>
+            <div id="recipeOutput" class="recipe-output hidden"></div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const AUTH_API_BASE = 'https://nuz5dbksz2.execute-api.us-east-1.amazonaws.com/dev';
+        const RECIPE_API_BASE = 'https://f3ohu70iha.execute-api.us-east-1.amazonaws.com/dev';
+        
+        let currentUser = null;
+        let authToken = null;
+        let refreshToken = null;
+        let pendingVerificationEmail = null;
+        
+        // Check if user is already logged in
+        window.onload = function() {
+            const savedToken = localStorage.getItem('authToken');
+            const savedRefreshToken = localStorage.getItem('refreshToken');
+            const savedUser = localStorage.getItem('userEmail');
+            
+            console.log('Saved token:', savedToken); // Debug log
+            console.log('Saved refresh token:', savedRefreshToken); // Debug log
+            console.log('Saved user:', savedUser); // Debug log
+            
+            if (savedToken && savedRefreshToken && savedUser) {
+                authToken = savedToken;
+                refreshToken = savedRefreshToken;
+                currentUser = savedUser;
+                showRecipeSection();
+            }
+        };
+        
+        async function register() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                showStatus('authStatus', 'Please fill in all fields', 'error');
+                return;
+            }
+            
+            if (password.length < 8) {
+                showStatus('authStatus', 'Password must be at least 8 characters long', 'error');
+                return;
+            }
+            
+            try {
+                showStatus('authStatus', 'Creating account...', 'info');
+                
+                const response = await fetch(`${AUTH_API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    pendingVerificationEmail = email;
+                    showVerificationSection();
+                    showStatus('verificationStatus', 'Account created! Please check your email for the verification code.', 'success');
+                } else {
+                    showStatus('authStatus', data.error || 'Registration failed', 'error');
+                }
+            } catch (error) {
+                showStatus('authStatus', 'Network error. Please try again.', 'error');
+                console.error('Registration error:', error);
+            }
+        }
+        
+        async function confirmEmail() {
+            const verificationCode = document.getElementById('verificationCode').value;
+            
+            if (!verificationCode || verificationCode.length !== 6) {
+                showStatus('verificationStatus', 'Please enter a valid 6-digit verification code', 'error');
+                return;
+            }
+            
+            try {
+                showStatus('verificationStatus', 'Verifying email...', 'info');
+                
+                const response = await fetch(`${AUTH_API_BASE}/auth/confirm-email`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        email: pendingVerificationEmail, 
+                        confirmationCode: verificationCode 
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showStatus('verificationStatus', 'Email verified successfully! You can now sign in.', 'success');
+                    setTimeout(() => {
+                        backToAuth();
+                        document.getElementById('email').value = pendingVerificationEmail;
+                    }, 2000);
+                } else {
+                    showStatus('verificationStatus', data.error || 'Verification failed', 'error');
+                }
+            } catch (error) {
+                showStatus('verificationStatus', 'Network error. Please try again.', 'error');
+                console.error('Verification error:', error);
+            }
+        }
+        
+        async function resendCode() {
+            if (!pendingVerificationEmail) {
+                showStatus('verificationStatus', 'No email address found. Please go back and register again.', 'error');
+                return;
+            }
+            
+            try {
+                showStatus('verificationStatus', 'Resending verification code...', 'info');
+                
+                const response = await fetch(`${AUTH_API_BASE}/auth/resend-confirmation`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email: pendingVerificationEmail })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showStatus('verificationStatus', 'Verification code resent! Please check your email.', 'success');
+                } else {
+                    showStatus('verificationStatus', data.error || 'Failed to resend code', 'error');
+                }
+            } catch (error) {
+                showStatus('verificationStatus', 'Network error. Please try again.', 'error');
+                console.error('Resend code error:', error);
+            }
+        }
+        
+        function showVerificationSection() {
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('verificationSection').classList.remove('hidden');
+            document.getElementById('userSection').classList.add('hidden');
+            document.getElementById('recipeSection').classList.add('hidden');
+        }
+        
+        function backToAuth() {
+            document.getElementById('authSection').classList.remove('hidden');
+            document.getElementById('verificationSection').classList.add('hidden');
+            document.getElementById('userSection').classList.add('hidden');
+            document.getElementById('recipeSection').classList.add('hidden');
+            
+            // Clear verification form
+            document.getElementById('verificationCode').value = '';
+            document.getElementById('verificationStatus').innerHTML = '';
+            pendingVerificationEmail = null;
+        }
+        
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                showStatus('authStatus', 'Please fill in all fields', 'error');
+                return;
+            }
+            
+            try {
+                showStatus('authStatus', 'Signing in...', 'info');
+                
+                const response = await fetch(`${AUTH_API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                console.log('Login response:', data); // Debug log
+                
+                if (response.ok && data.tokens) {
+                    authToken = data.tokens.idToken;  // Use idToken for API authentication
+                    refreshToken = data.tokens.refreshToken;  // Store refresh token
+                    currentUser = email;
+                    
+                    console.log('Setting authToken:', authToken); // Debug log
+                    console.log('Setting refreshToken:', refreshToken); // Debug log
+                    
+                    // Save to localStorage
+                    localStorage.setItem('authToken', authToken);
+                    localStorage.setItem('refreshToken', refreshToken);
+                    localStorage.setItem('userEmail', email);
+                    
+                    showStatus('authStatus', 'Signed in successfully!', 'success');
+                    setTimeout(showRecipeSection, 1000);
+                } else {
+                    showStatus('authStatus', data.error || 'Login failed', 'error');
+                }
+            } catch (error) {
+                showStatus('authStatus', 'Network error. Please try again.', 'error');
+                console.error('Login error:', error);
+            }
+        }
+        
+        function logout() {
+            authToken = null;
+            refreshToken = null;
+            currentUser = null;
+            pendingVerificationEmail = null;
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('userEmail');
+            
+            document.getElementById('authSection').classList.remove('hidden');
+            document.getElementById('verificationSection').classList.add('hidden');
+            document.getElementById('userSection').classList.add('hidden');
+            document.getElementById('recipeSection').classList.add('hidden');
+            
+            // Clear form fields
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('verificationCode').value = '';
+            document.getElementById('authStatus').innerHTML = '';
+            document.getElementById('verificationStatus').innerHTML = '';
+            document.getElementById('recipeOutput').classList.add('hidden');
+        }
+        
+        function showRecipeSection() {
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('userSection').classList.remove('hidden');
+            document.getElementById('recipeSection').classList.remove('hidden');
+            document.getElementById('userEmail').textContent = currentUser;
+        }
+        
+        // Function to refresh authentication tokens
+        async function refreshAuthToken() {
+            if (!refreshToken) {
+                console.log('No refresh token available');
+                return false;
+            }
+            
+            try {
+                console.log('Attempting to refresh token...');
+                
+                const response = await fetch(`${AUTH_API_BASE}/auth/refresh-token`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ refreshToken: refreshToken })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.tokens) {
+                    authToken = data.tokens.idToken;
+                    
+                    console.log('Token refreshed successfully');
+                    
+                    // Update localStorage with new token
+                    localStorage.setItem('authToken', authToken);
+                    
+                    return true;
+                } else {
+                    console.error('Token refresh failed:', data.error);
+                    return false;
+                }
+            } catch (error) {
+                console.error('Token refresh error:', error);
+                return false;
+            }
+        }
+        
+        // Function to make authenticated API calls with automatic token refresh
+        async function makeAuthenticatedRequest(url, options = {}) {
+            if (!authToken) {
+                throw new Error('No authentication token available');
+            }
+            
+            // Add authorization header
+            const requestOptions = {
+                ...options,
+                headers: {
+                    ...options.headers,
+                    'Authorization': `Bearer ${authToken}`
+                }
+            };
+            
+            // Make the initial request
+            let response = await fetch(url, requestOptions);
+            
+            // If token expired, try to refresh and retry
+            if (response.status === 401) {
+                const data = await response.json();
+                if (data.error && (data.error.includes('expired') || data.error.includes('Invalid token'))) {
+                    console.log('Token expired, attempting refresh...');
+                    
+                    // Try to refresh token first
+                    const refreshSuccess = await refreshAuthToken();
+                    if (refreshSuccess) {
+                        // Retry with new token
+                        requestOptions.headers['Authorization'] = `Bearer ${authToken}`;
+                        response = await fetch(url, requestOptions);
+                    } else {
+                        // Refresh failed or not available, redirect to login
+                        showStatus('recipeStatus', 'Your session has expired. Please sign in again.', 'error');
+                        setTimeout(() => {
+                            logout();
+                        }, 3000);
+                        throw new Error('Session expired');
+                    }
+                }
+            }
+            
+            return response;
+        }
+        
+        async function generateRecipe() {
+            const ingredients = document.getElementById('ingredients').value;
+            const preferences = document.getElementById('preferences').value;
+            const servings = document.getElementById('servings').value;
+            
+            if (!ingredients.trim()) {
+                showStatus('recipeStatus', 'Please enter some ingredients', 'error');
+                return;
+            }
+            
+            // Debug: Check if authToken exists
+            console.log('Auth token:', authToken);
+            console.log('Current user:', currentUser);
+            
+            if (!authToken) {
+                showStatus('recipeStatus', 'You are not logged in. Please sign in first.', 'error');
+                return;
+            }
+            
+            try {
+                // Show loading state
+                document.getElementById('generateText').classList.add('hidden');
+                document.getElementById('generateLoading').classList.remove('hidden');
+                showStatus('recipeStatus', 'Generating your recipe...', 'info');
+                
+                // Parse preferences into dietary restrictions and cuisine
+                const dietaryRestrictions = [];
+                let cuisine = '';
+                
+                if (preferences.trim()) {
+                    const prefs = preferences.toLowerCase().split(',').map(p => p.trim());
+                    const cuisineKeywords = ['italian', 'chinese', 'mexican', 'indian', 'thai', 'japanese', 'french', 'mediterranean', 'american', 'korean'];
+                    const dietaryKeywords = ['vegetarian', 'vegan', 'gluten-free', 'dairy-free', 'keto', 'low-carb', 'paleo', 'healthy', 'low-fat', 'sugar-free'];
+                    
+                    prefs.forEach(pref => {
+                        if (cuisineKeywords.some(c => pref.includes(c))) {
+                            cuisine = pref;
+                        } else if (dietaryKeywords.some(d => pref.includes(d))) {
+                            dietaryRestrictions.push(pref);
+                        } else {
+                            // Add other preferences as dietary restrictions
+                            dietaryRestrictions.push(pref);
+                        }
+                    });
+                }
+                
+                // Use the new authenticated request function
+                const response = await makeAuthenticatedRequest(`${RECIPE_API_BASE}/generate-recipe`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        ingredients: ingredients.split(',').map(i => i.trim()),
+                        dietaryRestrictions: dietaryRestrictions.length > 0 ? dietaryRestrictions : undefined,
+                        cuisine: cuisine || undefined,
+                        servings: parseInt(servings) || 4
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showStatus('recipeStatus', 'Recipe generated successfully!', 'success');
+                    
+                    // Format the recipe for display
+                    let recipeText = `🍽️ ${data.title}\n\n`;
+                    recipeText += `👥 Servings: ${data.servings}\n`;
+                    recipeText += `⏱️ Prep Time: ${data.prepTime} minutes\n`;
+                    recipeText += `🔥 Cook Time: ${data.cookTime} minutes\n\n`;
+                    
+                    recipeText += `📋 INGREDIENTS:\n`;
+                    data.ingredients.forEach(ingredient => {
+                        recipeText += `• ${ingredient.amount} ${ingredient.unit} ${ingredient.name}\n`;
+                    });
+                    
+                    recipeText += `\n📝 INSTRUCTIONS:\n`;
+                    data.instructions.forEach((instruction, index) => {
+                        recipeText += `${index + 1}. ${instruction}\n`;
+                    });
+                    
+                    if (data.nutritionInfo) {
+                        recipeText += `\n🥗 NUTRITION (per serving):\n`;
+                        recipeText += `• Calories: ${data.nutritionInfo.calories}\n`;
+                        recipeText += `• Protein: ${data.nutritionInfo.protein}g\n`;
+                        recipeText += `• Carbohydrates: ${data.nutritionInfo.carbohydrates}g\n`;
+                        recipeText += `• Fat: ${data.nutritionInfo.fat}g\n`;
+                    }
+                    
+                    document.getElementById('recipeOutput').textContent = recipeText;
+                    document.getElementById('recipeOutput').classList.remove('hidden');
+                } else {
+                    showStatus('recipeStatus', data.error || 'Failed to generate recipe', 'error');
+                }
+            } catch (error) {
+                if (error.message === 'Session expired') {
+                    // Already handled in makeAuthenticatedRequest
+                    return;
+                }
+                showStatus('recipeStatus', 'Network error. Please try again.', 'error');
+                console.error('Recipe generation error:', error);
+            } finally {
+                // Hide loading state
+                document.getElementById('generateText').classList.remove('hidden');
+                document.getElementById('generateLoading').classList.add('hidden');
+            }
+        }
+        
+        function showStatus(elementId, message, type) {
+            const statusElement = document.getElementById(elementId);
+            statusElement.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+        
+        // Enter key support
+        document.getElementById('email').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') login();
+        });
+        
+        document.getElementById('password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') login();
+        });
+        
+        document.getElementById('verificationCode').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') confirmEmail();
+        });
+        
+        document.getElementById('ingredients').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') generateRecipe();
+        });
+    </script>
+</body>
+</html>

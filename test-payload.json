@@ -1,0 +1,11 @@
+{
+  "httpMethod": "POST",
+  "headers": {
+    "Authorization": "Bearer test-token",
+    "Content-Type": "application/json"
+  },
+  "body": "{\"ingredients\":[\"chicken\",\"rice\"],\"preferences\":\"healthy\"}",
+  "requestContext": {
+    "requestId": "test-request-id"
+  }
+}

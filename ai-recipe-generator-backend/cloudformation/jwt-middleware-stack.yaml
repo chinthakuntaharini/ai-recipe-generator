@@ -1,0 +1,181 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'JWT Authentication Middleware for AI Recipe Generator'
+
+Parameters:
+  CognitoRegion:
+    Type: String
+    Default: 'us-east-1'
+    Description: 'AWS region where Cognito user pool is located'
+  
+  UserPoolId:
+    Type: String
+    Default: 'us-east-1_N0KMxM07E'
+    Description: 'Cognito User Pool ID'
+  
+  UserPoolClientId:
+    Type: String
+    Default: '1ia9lcg1nsld42j3giuvaeeo1b'
+    Description: 'Cognito User Pool Client ID'
+  
+  LambdaCodeBucket:
+    Type: String
+    Description: 'S3 bucket containing Lambda deployment package'
+  
+  LambdaCodeKey:
+    Type: String
+    Default: 'jwt-middleware-lambda.zip'
+    Description: 'S3 key for Lambda deployment package'
+
+Resources:
+  # IAM Role for Lambda Execution
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${AWS::StackName}-lambda-execution-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: CognitoAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cognito-idp:GetUser
+                  - cognito-idp:DescribeUserPool
+                Resource: !Sub 'arn:aws:cognito-idp:${CognitoRegion}:${AWS::AccountId}:userpool/${UserPoolId}'
+
+  # Lambda Function for Protected Example
+  ProtectedExampleFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${AWS::StackName}-protected-example'
+      Runtime: nodejs18.x
+      Handler: handlers/example-protected-handler.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref LambdaCodeBucket
+        S3Key: !Ref LambdaCodeKey
+      Environment:
+        Variables:
+          COGNITO_REGION: !Ref CognitoRegion
+          USER_POOL_ID: !Ref UserPoolId
+          USER_POOL_CLIENT_ID: !Ref UserPoolClientId
+      Timeout: 30
+      MemorySize: 256
+      Description: 'Example Lambda function with JWT authentication middleware'
+
+  # API Gateway REST API
+  RecipeGeneratorAPI:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub '${AWS::StackName}-api'
+      Description: 'AI Recipe Generator API with JWT Authentication'
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  # API Gateway Resource for /protected
+  ProtectedResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref RecipeGeneratorAPI
+      ParentId: !GetAtt RecipeGeneratorAPI.RootResourceId
+      PathPart: 'protected'
+
+  # API Gateway Method for GET /protected
+  ProtectedGetMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref RecipeGeneratorAPI
+      ResourceId: !Ref ProtectedResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ProtectedExampleFunction.Arn}/invocations'
+
+  # API Gateway Method for OPTIONS /protected (CORS)
+  ProtectedOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref RecipeGeneratorAPI
+      ResourceId: !Ref ProtectedResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+
+  # Lambda Permission for API Gateway
+  LambdaApiGatewayPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ProtectedExampleFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub '${RecipeGeneratorAPI}/*/GET/protected'
+
+  # API Gateway Deployment
+  APIDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - ProtectedGetMethod
+      - ProtectedOptionsMethod
+    Properties:
+      RestApiId: !Ref RecipeGeneratorAPI
+      StageName: 'prod'
+      StageDescription: 'Production stage for AI Recipe Generator API'
+
+  # CloudWatch Log Group for Lambda
+  LambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${ProtectedExampleFunction}'
+      RetentionInDays: 14
+
+Outputs:
+  APIEndpoint:
+    Description: 'API Gateway endpoint URL'
+    Value: !Sub 'https://${RecipeGeneratorAPI}.execute-api.${AWS::Region}.amazonaws.com/prod'
+    Export:
+      Name: !Sub '${AWS::StackName}-api-endpoint'
+
+  ProtectedEndpoint:
+    Description: 'Protected endpoint URL'
+    Value: !Sub 'https://${RecipeGeneratorAPI}.execute-api.${AWS::Region}.amazonaws.com/prod/protected'
+    Export:
+      Name: !Sub '${AWS::StackName}-protected-endpoint'
+
+  LambdaFunctionArn:
+    Description: 'Lambda function ARN'
+    Value: !GetAtt ProtectedExampleFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-lambda-arn'
+
+  LambdaExecutionRoleArn:
+    Description: 'Lambda execution role ARN'
+    Value: !GetAtt LambdaExecutionRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-execution-role-arn'

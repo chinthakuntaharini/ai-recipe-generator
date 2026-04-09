@@ -1,0 +1,829 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Authentication API endpoints for AI Recipe Generator'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: 'dev'
+    AllowedValues: ['dev', 'staging', 'prod']
+    Description: 'Environment name'
+  
+  UserPoolId:
+    Type: String
+    Default: 'us-east-1_N0KMxM07E'
+    Description: 'Cognito User Pool ID'
+  
+  UserPoolClientId:
+    Type: String
+    Default: '1ia9lcg1nsld42j3giuvaeeo1b'
+    Description: 'Cognito User Pool Client ID'
+
+Resources:
+  # IAM Role for Lambda Functions
+  AuthLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'ai-recipe-auth-lambda-role-${Environment}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: CognitoAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cognito-idp:SignUp
+                  - cognito-idp:InitiateAuth
+                  - cognito-idp:ConfirmSignUp
+                  - cognito-idp:ResendConfirmationCode
+                  - cognito-idp:ForgotPassword
+                  - cognito-idp:ConfirmForgotPassword
+                  - cognito-idp:GetUser
+                  - cognito-idp:AdminGetUser
+                Resource: !Sub 'arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPoolId}'
+
+  # Lambda Function for User Registration
+  RegisterFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'ai-recipe-auth-register-${Environment}'
+      Runtime: nodejs18.x
+      Handler: handlers/auth-handler.registerHandler
+      Role: !GetAtt AuthLambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          exports.registerHandler = async (event) => {
+            return {
+              statusCode: 200,
+              body: JSON.stringify({ message: 'Placeholder - deploy actual code' })
+            };
+          };
+      Environment:
+        Variables:
+          COGNITO_REGION: !Ref AWS::Region
+          USER_POOL_ID: !Ref UserPoolId
+          USER_POOL_CLIENT_ID: !Ref UserPoolClientId
+          ENVIRONMENT: !Ref Environment
+      Timeout: 30
+      MemorySize: 256
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Service
+          Value: 'ai-recipe-generator'
+        - Key: Component
+          Value: 'auth-api'
+
+  # Lambda Function for User Login
+  LoginFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'ai-recipe-auth-login-${Environment}'
+      Runtime: nodejs18.x
+      Handler: handlers/auth-handler.loginHandler
+      Role: !GetAtt AuthLambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          exports.loginHandler = async (event) => {
+            return {
+              statusCode: 200,
+              body: JSON.stringify({ message: 'Placeholder - deploy actual code' })
+            };
+          };
+      Environment:
+        Variables:
+          COGNITO_REGION: !Ref AWS::Region
+          USER_POOL_ID: !Ref UserPoolId
+          USER_POOL_CLIENT_ID: !Ref UserPoolClientId
+          ENVIRONMENT: !Ref Environment
+      Timeout: 30
+      MemorySize: 256
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Service
+          Value: 'ai-recipe-generator'
+        - Key: Component
+          Value: 'auth-api'
+
+  # Lambda Function for Email Confirmation
+  ConfirmEmailFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'ai-recipe-auth-confirm-email-${Environment}'
+      Runtime: nodejs18.x
+      Handler: handlers/auth-handler.confirmEmailHandler
+      Role: !GetAtt AuthLambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          exports.confirmEmailHandler = async (event) => {
+            return {
+              statusCode: 200,
+              body: JSON.stringify({ message: 'Placeholder - deploy actual code' })
+            };
+          };
+      Environment:
+        Variables:
+          COGNITO_REGION: !Ref AWS::Region
+          USER_POOL_ID: !Ref UserPoolId
+          USER_POOL_CLIENT_ID: !Ref UserPoolClientId
+          ENVIRONMENT: !Ref Environment
+      Timeout: 30
+      MemorySize: 256
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Service
+          Value: 'ai-recipe-generator'
+        - Key: Component
+          Value: 'auth-api'
+
+  # Lambda Function for Resend Confirmation
+  ResendConfirmationFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'ai-recipe-auth-resend-confirmation-${Environment}'
+      Runtime: nodejs18.x
+      Handler: handlers/auth-handler.resendConfirmationHandler
+      Role: !GetAtt AuthLambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          exports.resendConfirmationHandler = async (event) => {
+            return {
+              statusCode: 200,
+              body: JSON.stringify({ message: 'Placeholder - deploy actual code' })
+            };
+          };
+      Environment:
+        Variables:
+          COGNITO_REGION: !Ref AWS::Region
+          USER_POOL_ID: !Ref UserPoolId
+          USER_POOL_CLIENT_ID: !Ref UserPoolClientId
+          ENVIRONMENT: !Ref Environment
+      Timeout: 30
+      MemorySize: 256
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Service
+          Value: 'ai-recipe-generator'
+        - Key: Component
+          Value: 'auth-api'
+
+  # Lambda Function for Forgot Password
+  ForgotPasswordFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'ai-recipe-auth-forgot-password-${Environment}'
+      Runtime: nodejs18.x
+      Handler: handlers/auth-handler.forgotPasswordHandler
+      Role: !GetAtt AuthLambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          exports.forgotPasswordHandler = async (event) => {
+            return {
+              statusCode: 200,
+              body: JSON.stringify({ message: 'Placeholder - deploy actual code' })
+            };
+          };
+      Environment:
+        Variables:
+          COGNITO_REGION: !Ref AWS::Region
+          USER_POOL_ID: !Ref UserPoolId
+          USER_POOL_CLIENT_ID: !Ref UserPoolClientId
+          ENVIRONMENT: !Ref Environment
+      Timeout: 30
+      MemorySize: 256
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Service
+          Value: 'ai-recipe-generator'
+        - Key: Component
+          Value: 'auth-api'
+
+  # Lambda Function for Confirm Forgot Password
+  ConfirmForgotPasswordFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'ai-recipe-auth-confirm-forgot-password-${Environment}'
+      Runtime: nodejs18.x
+      Handler: handlers/auth-handler.confirmForgotPasswordHandler
+      Role: !GetAtt AuthLambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          exports.confirmForgotPasswordHandler = async (event) => {
+            return {
+              statusCode: 200,
+              body: JSON.stringify({ message: 'Placeholder - deploy actual code' })
+            };
+          };
+      Environment:
+        Variables:
+          COGNITO_REGION: !Ref AWS::Region
+          USER_POOL_ID: !Ref UserPoolId
+          USER_POOL_CLIENT_ID: !Ref UserPoolClientId
+          ENVIRONMENT: !Ref Environment
+      Timeout: 30
+      MemorySize: 256
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Service
+          Value: 'ai-recipe-generator'
+        - Key: Component
+          Value: 'auth-api'
+
+  # Lambda Function for Refresh Token
+  RefreshTokenFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'ai-recipe-auth-refresh-token-${Environment}'
+      Runtime: nodejs18.x
+      Handler: handlers/auth-handler.refreshTokenHandler
+      Role: !GetAtt AuthLambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          exports.refreshTokenHandler = async (event) => {
+            return {
+              statusCode: 200,
+              body: JSON.stringify({ message: 'Placeholder - deploy actual code' })
+            };
+          };
+      Environment:
+        Variables:
+          COGNITO_REGION: !Ref AWS::Region
+          USER_POOL_ID: !Ref UserPoolId
+          USER_POOL_CLIENT_ID: !Ref UserPoolClientId
+          ENVIRONMENT: !Ref Environment
+      Timeout: 30
+      MemorySize: 256
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Service
+          Value: 'ai-recipe-generator'
+        - Key: Component
+          Value: 'auth-api'
+
+  # API Gateway REST API
+  AuthAPI:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub 'ai-recipe-auth-api-${Environment}'
+      Description: 'Authentication API for AI Recipe Generator'
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Service
+          Value: 'ai-recipe-generator'
+        - Key: Component
+          Value: 'auth-api'
+
+  # API Gateway Resource: /auth
+  AuthResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref AuthAPI
+      ParentId: !GetAtt AuthAPI.RootResourceId
+      PathPart: 'auth'
+
+  # API Gateway Resource: /auth/register
+  RegisterResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref AuthAPI
+      ParentId: !Ref AuthResource
+      PathPart: 'register'
+
+  # API Gateway Resource: /auth/login
+  LoginResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref AuthAPI
+      ParentId: !Ref AuthResource
+      PathPart: 'login'
+
+  # API Gateway Resource: /auth/confirm-email
+  ConfirmEmailResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref AuthAPI
+      ParentId: !Ref AuthResource
+      PathPart: 'confirm-email'
+
+  # API Gateway Resource: /auth/resend-confirmation
+  ResendConfirmationResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref AuthAPI
+      ParentId: !Ref AuthResource
+      PathPart: 'resend-confirmation'
+
+  # API Gateway Resource: /auth/forgot-password
+  ForgotPasswordResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref AuthAPI
+      ParentId: !Ref AuthResource
+      PathPart: 'forgot-password'
+
+  # API Gateway Resource: /auth/confirm-forgot-password
+  ConfirmForgotPasswordResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref AuthAPI
+      ParentId: !Ref AuthResource
+      PathPart: 'confirm-forgot-password'
+
+  # API Gateway Resource: /auth/refresh-token
+  RefreshTokenResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref AuthAPI
+      ParentId: !Ref AuthResource
+      PathPart: 'refresh-token'
+  # API Gateway Methods and Integrations
+
+  # POST /auth/register
+  RegisterMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref AuthAPI
+      ResourceId: !Ref RegisterResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${RegisterFunction.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+        - StatusCode: 400
+        - StatusCode: 409
+        - StatusCode: 500
+
+  RegisterOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref AuthAPI
+      ResourceId: !Ref RegisterResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseHeaders:
+            Access-Control-Allow-Headers: true
+            Access-Control-Allow-Methods: true
+            Access-Control-Allow-Origin: true
+
+  # POST /auth/login
+  LoginMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref AuthAPI
+      ResourceId: !Ref LoginResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LoginFunction.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+        - StatusCode: 400
+        - StatusCode: 401
+        - StatusCode: 429
+        - StatusCode: 500
+
+  LoginOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref AuthAPI
+      ResourceId: !Ref LoginResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseHeaders:
+            Access-Control-Allow-Headers: true
+            Access-Control-Allow-Methods: true
+            Access-Control-Allow-Origin: true
+
+  # POST /auth/confirm-email
+  ConfirmEmailMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref AuthAPI
+      ResourceId: !Ref ConfirmEmailResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ConfirmEmailFunction.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+        - StatusCode: 400
+        - StatusCode: 404
+        - StatusCode: 500
+
+  ConfirmEmailOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref AuthAPI
+      ResourceId: !Ref ConfirmEmailResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseHeaders:
+            Access-Control-Allow-Headers: true
+            Access-Control-Allow-Methods: true
+            Access-Control-Allow-Origin: true
+
+  # POST /auth/resend-confirmation
+  ResendConfirmationMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref AuthAPI
+      ResourceId: !Ref ResendConfirmationResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ResendConfirmationFunction.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+        - StatusCode: 400
+        - StatusCode: 404
+        - StatusCode: 429
+        - StatusCode: 500
+
+  ResendConfirmationOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref AuthAPI
+      ResourceId: !Ref ResendConfirmationResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseHeaders:
+            Access-Control-Allow-Headers: true
+            Access-Control-Allow-Methods: true
+            Access-Control-Allow-Origin: true
+
+  # POST /auth/forgot-password
+  ForgotPasswordMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref AuthAPI
+      ResourceId: !Ref ForgotPasswordResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ForgotPasswordFunction.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+        - StatusCode: 400
+        - StatusCode: 429
+        - StatusCode: 500
+
+  ForgotPasswordOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref AuthAPI
+      ResourceId: !Ref ForgotPasswordResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseHeaders:
+            Access-Control-Allow-Headers: true
+            Access-Control-Allow-Methods: true
+            Access-Control-Allow-Origin: true
+
+  # POST /auth/confirm-forgot-password
+  ConfirmForgotPasswordMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref AuthAPI
+      ResourceId: !Ref ConfirmForgotPasswordResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ConfirmForgotPasswordFunction.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+        - StatusCode: 400
+        - StatusCode: 404
+        - StatusCode: 429
+        - StatusCode: 500
+
+  ConfirmForgotPasswordOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref AuthAPI
+      ResourceId: !Ref ConfirmForgotPasswordResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseHeaders:
+            Access-Control-Allow-Headers: true
+            Access-Control-Allow-Methods: true
+            Access-Control-Allow-Origin: true
+
+  # POST /auth/refresh-token
+  RefreshTokenMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref AuthAPI
+      ResourceId: !Ref RefreshTokenResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${RefreshTokenFunction.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+        - StatusCode: 400
+        - StatusCode: 401
+        - StatusCode: 404
+        - StatusCode: 500
+
+  RefreshTokenOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref AuthAPI
+      ResourceId: !Ref RefreshTokenResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseHeaders:
+            Access-Control-Allow-Headers: true
+            Access-Control-Allow-Methods: true
+            Access-Control-Allow-Origin: true
+
+  # Lambda Permissions for API Gateway
+  RegisterLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref RegisterFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${AuthAPI}/*/POST/auth/register'
+
+  LoginLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref LoginFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${AuthAPI}/*/POST/auth/login'
+
+  ConfirmEmailLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ConfirmEmailFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${AuthAPI}/*/POST/auth/confirm-email'
+
+  ResendConfirmationLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ResendConfirmationFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${AuthAPI}/*/POST/auth/resend-confirmation'
+
+  ForgotPasswordLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ForgotPasswordFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${AuthAPI}/*/POST/auth/forgot-password'
+
+  ConfirmForgotPasswordLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ConfirmForgotPasswordFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${AuthAPI}/*/POST/auth/confirm-forgot-password'
+
+  RefreshTokenLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref RefreshTokenFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${AuthAPI}/*/POST/auth/refresh-token'
+
+  # API Gateway Deployment
+  AuthAPIDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - RegisterMethod
+      - LoginMethod
+      - ConfirmEmailMethod
+      - ResendConfirmationMethod
+      - ForgotPasswordMethod
+      - ConfirmForgotPasswordMethod
+      - RefreshTokenMethod
+      - RegisterOptionsMethod
+      - LoginOptionsMethod
+      - ConfirmEmailOptionsMethod
+      - ResendConfirmationOptionsMethod
+      - ForgotPasswordOptionsMethod
+      - ConfirmForgotPasswordOptionsMethod
+      - RefreshTokenOptionsMethod
+    Properties:
+      RestApiId: !Ref AuthAPI
+      Description: !Sub 'Deployment for ${Environment} environment'
+
+  # API Gateway Stage
+  AuthAPIStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId: !Ref AuthAPI
+      DeploymentId: !Ref AuthAPIDeployment
+      StageName: !Ref Environment
+      Description: !Sub 'Stage for ${Environment} environment'
+      Variables:
+        Environment: !Ref Environment
+      MethodSettings:
+        - ResourcePath: '/*'
+          HttpMethod: '*'
+          LoggingLevel: INFO
+          DataTraceEnabled: true
+          MetricsEnabled: true
+          ThrottlingBurstLimit: 100
+          ThrottlingRateLimit: 50
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Service
+          Value: 'ai-recipe-generator'
+        - Key: Component
+          Value: 'auth-api'
+
+  # CloudWatch Log Group for API Gateway
+  AuthAPILogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/apigateway/ai-recipe-auth-api-${Environment}'
+      RetentionInDays: 14
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Service
+          Value: 'ai-recipe-generator'
+        - Key: Component
+          Value: 'auth-api'
+
+Outputs:
+  AuthAPIId:
+    Description: 'Authentication API Gateway ID'
+    Value: !Ref AuthAPI
+    Export:
+      Name: !Sub '${AWS::StackName}-AuthAPIId'
+
+  AuthAPIUrl:
+    Description: 'Authentication API Gateway URL'
+    Value: !Sub 'https://${AuthAPI}.execute-api.${AWS::Region}.amazonaws.com/${Environment}'
+    Export:
+      Name: !Sub '${AWS::StackName}-AuthAPIUrl'
+
+  RegisterFunctionArn:
+    Description: 'Register Lambda Function ARN'
+    Value: !GetAtt RegisterFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-RegisterFunctionArn'
+
+  LoginFunctionArn:
+    Description: 'Login Lambda Function ARN'
+    Value: !GetAtt LoginFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-LoginFunctionArn'
+
+  ConfirmEmailFunctionArn:
+    Description: 'Confirm Email Lambda Function ARN'
+    Value: !GetAtt ConfirmEmailFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-ConfirmEmailFunctionArn'
+
+  ResendConfirmationFunctionArn:
+    Description: 'Resend Confirmation Lambda Function ARN'
+    Value: !GetAtt ResendConfirmationFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-ResendConfirmationFunctionArn'
+
+  ForgotPasswordFunctionArn:
+    Description: 'Forgot Password Lambda Function ARN'
+    Value: !GetAtt ForgotPasswordFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-ForgotPasswordFunctionArn'
+
+  ConfirmForgotPasswordFunctionArn:
+    Description: 'Confirm Forgot Password Lambda Function ARN'
+    Value: !GetAtt ConfirmForgotPasswordFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-ConfirmForgotPasswordFunctionArn'
+
+  RefreshTokenFunctionArn:
+    Description: 'Refresh Token Lambda Function ARN'
+    Value: !GetAtt RefreshTokenFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-RefreshTokenFunctionArn'

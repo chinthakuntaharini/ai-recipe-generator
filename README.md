@@ -267,7 +267,7 @@ This project is licensed under the MIT License.
 ## 👥 Authors
 
 - **Harini Chinthakunta** - [GitHub](https://github.com/chinthakuntaharini)
-
+- **Vedanth Raj** - [Github](https://github.com/vedanth-raj)
 ## 🙏 Acknowledgments
 
 - AWS for providing excellent cloud services

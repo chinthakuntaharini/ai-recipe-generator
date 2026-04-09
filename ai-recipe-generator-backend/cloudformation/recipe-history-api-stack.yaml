@@ -1,0 +1,529 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Recipe History API endpoints for AI Recipe Generator'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: 'dev'
+    AllowedValues: ['dev', 'staging', 'prod']
+    Description: 'Environment name'
+  
+  UserPoolId:
+    Type: String
+    Default: 'us-east-1_N0KMxM07E'
+    Description: 'Cognito User Pool ID'
+  
+  UserPoolClientId:
+    Type: String
+    Default: '1ia9lcg1nsld42j3giuvaeeo1b'
+    Description: 'Cognito User Pool Client ID'
+
+Resources:
+  # DynamoDB Recipe History Table
+  RecipeHistoryTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'RecipeHistory-${Environment}'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: recipeId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        - AttributeName: recipeId
+          KeyType: RANGE
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Service
+          Value: 'ai-recipe-generator'
+        - Key: Component
+          Value: 'recipe-history-api'
+
+  # IAM Role for Recipe History Lambda Functions
+  RecipeHistoryLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'ai-recipe-history-lambda-role-${Environment}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource: !GetAtt RecipeHistoryTable.Arn
+
+  # Lambda Function for GET /recipes
+  GetRecipesFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'ai-recipe-get-recipes-${Environment}'
+      Runtime: nodejs18.x
+      Handler: handlers/recipe-history-handler.getRecipes
+      Role: !GetAtt RecipeHistoryLambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          exports.getRecipes = async (event) => {
+            return {
+              statusCode: 200,
+              body: JSON.stringify({ message: 'Placeholder - deploy actual code' })
+            };
+          };
+      Environment:
+        Variables:
+          COGNITO_REGION: !Ref AWS::Region
+          USER_POOL_ID: !Ref UserPoolId
+          USER_POOL_CLIENT_ID: !Ref UserPoolClientId
+          RECIPE_HISTORY_TABLE: !Ref RecipeHistoryTable
+          ENVIRONMENT: !Ref Environment
+      Timeout: 30
+      MemorySize: 256
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Service
+          Value: 'ai-recipe-generator'
+        - Key: Component
+          Value: 'recipe-history-api'
+
+  # Lambda Function for GET /recipes/:recipeId
+  GetRecipeFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'ai-recipe-get-recipe-${Environment}'
+      Runtime: nodejs18.x
+      Handler: handlers/recipe-history-handler.getRecipe
+      Role: !GetAtt RecipeHistoryLambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          exports.getRecipe = async (event) => {
+            return {
+              statusCode: 200,
+              body: JSON.stringify({ message: 'Placeholder - deploy actual code' })
+            };
+          };
+      Environment:
+        Variables:
+          COGNITO_REGION: !Ref AWS::Region
+          USER_POOL_ID: !Ref UserPoolId
+          USER_POOL_CLIENT_ID: !Ref UserPoolClientId
+          RECIPE_HISTORY_TABLE: !Ref RecipeHistoryTable
+          ENVIRONMENT: !Ref Environment
+      Timeout: 30
+      MemorySize: 256
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Service
+          Value: 'ai-recipe-generator'
+        - Key: Component
+          Value: 'recipe-history-api'
+
+  # Lambda Function for PUT /recipes/:recipeId/favorite
+  ToggleFavoriteFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'ai-recipe-toggle-favorite-${Environment}'
+      Runtime: nodejs18.x
+      Handler: handlers/recipe-history-handler.toggleFavorite
+      Role: !GetAtt RecipeHistoryLambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          exports.toggleFavorite = async (event) => {
+            return {
+              statusCode: 200,
+              body: JSON.stringify({ message: 'Placeholder - deploy actual code' })
+            };
+          };
+      Environment:
+        Variables:
+          COGNITO_REGION: !Ref AWS::Region
+          USER_POOL_ID: !Ref UserPoolId
+          USER_POOL_CLIENT_ID: !Ref UserPoolClientId
+          RECIPE_HISTORY_TABLE: !Ref RecipeHistoryTable
+          ENVIRONMENT: !Ref Environment
+      Timeout: 30
+      MemorySize: 256
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Service
+          Value: 'ai-recipe-generator'
+        - Key: Component
+          Value: 'recipe-history-api'
+
+  # Lambda Function for DELETE /recipes/:recipeId
+  DeleteRecipeFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'ai-recipe-delete-recipe-${Environment}'
+      Runtime: nodejs18.x
+      Handler: handlers/recipe-history-handler.deleteRecipe
+      Role: !GetAtt RecipeHistoryLambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          exports.deleteRecipe = async (event) => {
+            return {
+              statusCode: 200,
+              body: JSON.stringify({ message: 'Placeholder - deploy actual code' })
+            };
+          };
+      Environment:
+        Variables:
+          COGNITO_REGION: !Ref AWS::Region
+          USER_POOL_ID: !Ref UserPoolId
+          USER_POOL_CLIENT_ID: !Ref UserPoolClientId
+          RECIPE_HISTORY_TABLE: !Ref RecipeHistoryTable
+          ENVIRONMENT: !Ref Environment
+      Timeout: 30
+      MemorySize: 256
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Service
+          Value: 'ai-recipe-generator'
+        - Key: Component
+          Value: 'recipe-history-api'
+
+  # API Gateway REST API
+  RecipeHistoryAPI:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub 'ai-recipe-history-api-${Environment}'
+      Description: 'Recipe History API for AI Recipe Generator'
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Service
+          Value: 'ai-recipe-generator'
+        - Key: Component
+          Value: 'recipe-history-api'
+
+  # API Gateway Resource: /recipes
+  RecipesResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref RecipeHistoryAPI
+      ParentId: !GetAtt RecipeHistoryAPI.RootResourceId
+      PathPart: 'recipes'
+
+  # API Gateway Resource: /recipes/{recipeId}
+  RecipeIdResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref RecipeHistoryAPI
+      ParentId: !Ref RecipesResource
+      PathPart: '{recipeId}'
+
+  # API Gateway Resource: /recipes/{recipeId}/favorite
+  FavoriteResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref RecipeHistoryAPI
+      ParentId: !Ref RecipeIdResource
+      PathPart: 'favorite'
+
+  # GET /recipes
+  GetRecipesMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref RecipeHistoryAPI
+      ResourceId: !Ref RecipesResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      RequestParameters:
+        method.request.querystring.cuisine: false
+        method.request.querystring.mealType: false
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetRecipesFunction.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+        - StatusCode: 401
+        - StatusCode: 500
+
+  RecipesOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref RecipeHistoryAPI
+      ResourceId: !Ref RecipesResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseHeaders:
+            Access-Control-Allow-Headers: true
+            Access-Control-Allow-Methods: true
+            Access-Control-Allow-Origin: true
+
+  # GET /recipes/{recipeId}
+  GetRecipeMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref RecipeHistoryAPI
+      ResourceId: !Ref RecipeIdResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      RequestParameters:
+        method.request.path.recipeId: true
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetRecipeFunction.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+        - StatusCode: 401
+        - StatusCode: 404
+        - StatusCode: 500
+
+  RecipeIdOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref RecipeHistoryAPI
+      ResourceId: !Ref RecipeIdResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseHeaders:
+            Access-Control-Allow-Headers: true
+            Access-Control-Allow-Methods: true
+            Access-Control-Allow-Origin: true
+
+  # DELETE /recipes/{recipeId}
+  DeleteRecipeMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref RecipeHistoryAPI
+      ResourceId: !Ref RecipeIdResource
+      HttpMethod: DELETE
+      AuthorizationType: NONE
+      RequestParameters:
+        method.request.path.recipeId: true
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DeleteRecipeFunction.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+        - StatusCode: 401
+        - StatusCode: 404
+        - StatusCode: 500
+
+  # PUT /recipes/{recipeId}/favorite
+  ToggleFavoriteMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref RecipeHistoryAPI
+      ResourceId: !Ref FavoriteResource
+      HttpMethod: PUT
+      AuthorizationType: NONE
+      RequestParameters:
+        method.request.path.recipeId: true
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ToggleFavoriteFunction.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+        - StatusCode: 400
+        - StatusCode: 401
+        - StatusCode: 500
+
+  FavoriteOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref RecipeHistoryAPI
+      ResourceId: !Ref FavoriteResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseHeaders:
+            Access-Control-Allow-Headers: true
+            Access-Control-Allow-Methods: true
+            Access-Control-Allow-Origin: true
+
+  # Lambda Permissions for API Gateway
+  GetRecipesLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref GetRecipesFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${RecipeHistoryAPI}/*/GET/recipes'
+
+  GetRecipeLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref GetRecipeFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${RecipeHistoryAPI}/*/GET/recipes/*'
+
+  ToggleFavoriteLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ToggleFavoriteFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${RecipeHistoryAPI}/*/PUT/recipes/*/favorite'
+
+  DeleteRecipeLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref DeleteRecipeFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${RecipeHistoryAPI}/*/DELETE/recipes/*'
+
+  # API Gateway Deployment
+  RecipeHistoryAPIDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - GetRecipesMethod
+      - GetRecipeMethod
+      - ToggleFavoriteMethod
+      - DeleteRecipeMethod
+      - RecipesOptionsMethod
+      - RecipeIdOptionsMethod
+      - FavoriteOptionsMethod
+    Properties:
+      RestApiId: !Ref RecipeHistoryAPI
+      Description: !Sub 'Deployment for ${Environment} environment'
+
+  # API Gateway Stage
+  RecipeHistoryAPIStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId: !Ref RecipeHistoryAPI
+      DeploymentId: !Ref RecipeHistoryAPIDeployment
+      StageName: !Ref Environment
+      Description: !Sub 'Stage for ${Environment} environment'
+      Variables:
+        Environment: !Ref Environment
+      MethodSettings:
+        - ResourcePath: '/*'
+          HttpMethod: '*'
+          LoggingLevel: INFO
+          DataTraceEnabled: true
+          MetricsEnabled: true
+          ThrottlingBurstLimit: 100
+          ThrottlingRateLimit: 50
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Service
+          Value: 'ai-recipe-generator'
+        - Key: Component
+          Value: 'recipe-history-api'
+
+  # CloudWatch Log Group for API Gateway
+  RecipeHistoryAPILogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/apigateway/ai-recipe-history-api-${Environment}'
+      RetentionInDays: 14
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Service
+          Value: 'ai-recipe-generator'
+        - Key: Component
+          Value: 'recipe-history-api'
+
+Outputs:
+  RecipeHistoryAPIId:
+    Description: 'Recipe History API Gateway ID'
+    Value: !Ref RecipeHistoryAPI
+    Export:
+      Name: !Sub '${AWS::StackName}-RecipeHistoryAPIId'
+
+  RecipeHistoryAPIUrl:
+    Description: 'Recipe History API Gateway URL'
+    Value: !Sub 'https://${RecipeHistoryAPI}.execute-api.${AWS::Region}.amazonaws.com/${Environment}'
+    Export:
+      Name: !Sub '${AWS::StackName}-RecipeHistoryAPIUrl'
+
+  RecipeHistoryTableName:
+    Description: 'DynamoDB Recipe History Table Name'
+    Value: !Ref RecipeHistoryTable
+    Export:
+      Name: !Sub '${AWS::StackName}-RecipeHistoryTableName'
+
+  GetRecipesFunctionArn:
+    Description: 'Get Recipes Lambda Function ARN'
+    Value: !GetAtt GetRecipesFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-GetRecipesFunctionArn'
+
+  GetRecipeFunctionArn:
+    Description: 'Get Recipe Lambda Function ARN'
+    Value: !GetAtt GetRecipeFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-GetRecipeFunctionArn'
+
+  ToggleFavoriteFunctionArn:
+    Description: 'Toggle Favorite Lambda Function ARN'
+    Value: !GetAtt ToggleFavoriteFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-ToggleFavoriteFunctionArn'
+
+  DeleteRecipeFunctionArn:
+    Description: 'Delete Recipe Lambda Function ARN'
+    Value: !GetAtt DeleteRecipeFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-DeleteRecipeFunctionArn'

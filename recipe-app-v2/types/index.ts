@@ -32,41 +32,48 @@ export interface Ingredient {
 }
 
 export interface NutritionInfo {
-  calories: number;
-  protein: number;
-  carbohydrates: number;
-  fat: number;
+  calories?: number | string;
+  protein?: number | string;
+  carbohydrates?: number | string;
+  carbs?: number | string;
+  fat?: number | string;
+  fiber?: number | string;
 }
 
 export interface Recipe {
-  recipeId: string;
-  userId: string;
-  recipeName: string;
-  recipeDescription: string;
+  id: string;
+  userId?: string;
+  title: string;
+  description?: string;
   ingredients: Ingredient[];
   instructions: string[];
-  nutritionInfo: NutritionInfo;
-  difficulty: string;
-  variationTips: string[];
-  cuisine: string;
-  mealType: MealType;
-  cookTime: number;
-  isFavorite: boolean;
+  prepTime?: number;
+  cookTime?: number;
+  servings?: number;
+  nutritionInfo?: NutritionInfo;
+  difficulty?: string;
+  variationTips?: string[];
+  cuisine?: string;
+  mealType?: MealType;
+  isFavorite?: boolean;
   createdAt: string;
+  tags?: string[];
 }
 
 export interface RecipeRequest {
-  dietType: DietType;
-  mealType: MealType;
-  cuisine: string;
-  cookingStyle: CookingStyle;
-  appliances: Appliance[];
-  pantryStaples: string[];
-  spiceLevel: SpiceLevel;
-  healthGoal: CookingGoal;
-  cookTime: number;
   ingredients: string[];
-  restrictions: string[];
+  dietType?: DietType;
+  mealType?: MealType;
+  cuisine?: string;
+  cookingStyle?: CookingStyle;
+  appliances?: Appliance[];
+  pantryStaples?: string[];
+  spiceLevel?: SpiceLevel;
+  healthGoal?: CookingGoal;
+  cookTime?: number;
+  restrictions?: string[];
+  dietaryRestrictions?: string[];
+  servings?: number;
 }
 
 // Onboarding Types
@@ -99,4 +106,5 @@ export interface RecipeFormState {
   healthGoal: CookingGoal;
   cookTime: number;
   ingredients: string;
+  dietaryRestrictions?: string[];
 }

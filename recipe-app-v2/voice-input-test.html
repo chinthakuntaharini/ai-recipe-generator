@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Input Test - Recipe App V2</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #fef9f3 0%, #fff5e6 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+
+        .info {
+            background: #fef3e6;
+            border-left: 4px solid #ff6600;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #374151;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 0.5rem;
+            align-items: flex-start;
+        }
+
+        textarea {
+            flex: 1;
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            min-height: 100px;
+            resize: vertical;
+            transition: all 150ms ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #ff6600;
+            box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.1);
+        }
+
+        .btn-voice {
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+            background: white;
+            color: #333;
+            cursor: pointer;
+            min-width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 200ms ease;
+        }
+
+        .btn-voice:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(255, 102, 0, 0.2);
+            border-color: #ff6600;
+        }
+
+        .btn-voice:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+
+        .btn-voice:disabled {
+            background: #ef4444;
+            color: white;
+            border-color: #ef4444;
+            cursor: not-allowed;
+        }
+
+        .btn-voice.hidden {
+            display: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .btn-voice:disabled svg {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .status {
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            min-height: 1.5rem;
+        }
+
+        .status.listening {
+            color: #ef4444;
+        }
+
+        .status.success {
+            color: #10b981;
+        }
+
+        .status.error {
+            color: #ef4444;
+        }
+
+        .support-info {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: #f9fafb;
+            border-radius: 8px;
+            font-size: 0.875rem;
+        }
+
+        .support-info h3 {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            color: #1f2937;
+        }
+
+        .support-info ul {
+            list-style-position: inside;
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+        .support-info .supported {
+            color: #10b981;
+        }
+
+        .support-info .not-supported {
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Voice Input Test</h1>
+        
+        <div class="info">
+            <strong>Test Instructions:</strong> Click the microphone button and speak your ingredients. 
+            The Web Speech API will convert your speech to text.
+        </div>
+
+        <div class="form-group">
+            <label for="ingredients">What ingredients do you have?</label>
+            <div class="input-wrapper">
+                <textarea 
+                    id="ingredients" 
+                    placeholder="Enter ingredients separated by commas (e.g., chicken, rice, tomatoes)"
+                ></textarea>
+                <button 
+                    id="voiceBtn" 
+                    class="btn-voice" 
+                    title="Click to speak ingredients"
+                >
+                    <svg
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                        <line x1="12" y1="19" x2="12" y2="23" />
+                        <line x1="8" y1="23" x2="16" y2="23" />
+                    </svg>
+                </button>
+            </div>
+            <div id="status" class="status"></div>
+        </div>
+
+        <div class="support-info">
+            <h3>Browser Support Status</h3>
+            <ul>
+                <li id="apiSupport"></li>
+                <li id="browserInfo"></li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Check for Web Speech API support
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const voiceBtn = document.getElementById('voiceBtn');
+        const ingredientsInput = document.getElementById('ingredients');
+        const statusDiv = document.getElementById('status');
+        const apiSupportLi = document.getElementById('apiSupport');
+        const browserInfoLi = document.getElementById('browserInfo');
+
+        // Display support information
+        if (SpeechRecognition) {
+            apiSupportLi.innerHTML = '<span class="supported">✅ Web Speech API is supported</span>';
+            browserInfoLi.textContent = `Browser: ${navigator.userAgent.split(' ').slice(-1)[0]}`;
+        } else {
+            apiSupportLi.innerHTML = '<span class="not-supported">❌ Web Speech API is not supported</span>';
+            browserInfoLi.textContent = 'Try Chrome, Edge, or Safari for voice input support';
+            voiceBtn.classList.add('hidden');
+        }
+
+        // Voice input handler
+        let recognition = null;
+
+        voiceBtn.addEventListener('click', () => {
+            if (!SpeechRecognition) {
+                alert('Voice input is not supported in your browser');
+                return;
+            }
+
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = () => {
+                voiceBtn.disabled = true;
+                voiceBtn.title = 'Listening...';
+                statusDiv.textContent = '🎤 Listening... Speak your ingredients now';
+                statusDiv.className = 'status listening';
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                ingredientsInput.value = transcript;
+                statusDiv.textContent = '✅ Speech recognized successfully!';
+                statusDiv.className = 'status success';
+                
+                setTimeout(() => {
+                    statusDiv.textContent = '';
+                    statusDiv.className = 'status';
+                }, 3000);
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                voiceBtn.disabled = false;
+                voiceBtn.title = 'Click to speak ingredients';
+                
+                let errorMessage = 'Voice input failed. Please try again.';
+                
+                if (event.error === 'not-allowed') {
+                    errorMessage = '❌ Microphone permission denied. Please allow microphone access.';
+                } else if (event.error === 'no-speech') {
+                    errorMessage = '❌ No speech detected. Please try again.';
+                } else if (event.error === 'network') {
+                    errorMessage = '❌ Network error. Check your internet connection.';
+                }
+                
+                statusDiv.textContent = errorMessage;
+                statusDiv.className = 'status error';
+            };
+
+            recognition.onend = () => {
+                voiceBtn.disabled = false;
+                voiceBtn.title = 'Click to speak ingredients';
+                
+                if (statusDiv.className === 'status listening') {
+                    statusDiv.textContent = '';
+                    statusDiv.className = 'status';
+                }
+            };
+
+            try {
+                recognition.start();
+            } catch (error) {
+                console.error('Failed to start speech recognition:', error);
+                voiceBtn.disabled = false;
+                statusDiv.textContent = '❌ Failed to start voice input. Please try again.';
+                statusDiv.className = 'status error';
+            }
+        });
+    </script>
+</body>
+</html>

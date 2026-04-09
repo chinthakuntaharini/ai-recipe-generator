@@ -1,0 +1,417 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Profile Management API endpoints for AI Recipe Generator'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: 'dev'
+    AllowedValues: ['dev', 'staging', 'prod']
+    Description: 'Environment name'
+  
+  UserPoolId:
+    Type: String
+    Default: 'us-east-1_N0KMxM07E'
+    Description: 'Cognito User Pool ID'
+  
+  UserPoolClientId:
+    Type: String
+    Default: '1ia9lcg1nsld42j3giuvaeeo1b'
+    Description: 'Cognito User Pool Client ID'
+
+Resources:
+  # DynamoDB Users Table
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'Users-${Environment}'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Service
+          Value: 'ai-recipe-generator'
+        - Key: Component
+          Value: 'profile-api'
+
+  # IAM Role for Profile Lambda Functions
+  ProfileLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'ai-recipe-profile-lambda-role-${Environment}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource: !GetAtt UsersTable.Arn
+
+  # Lambda Function for GET /profile
+  GetProfileFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'ai-recipe-get-profile-${Environment}'
+      Runtime: nodejs18.x
+      Handler: handlers/profile-handler.getProfile
+      Role: !GetAtt ProfileLambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          exports.getProfile = async (event) => {
+            return {
+              statusCode: 200,
+              body: JSON.stringify({ message: 'Placeholder - deploy actual code' })
+            };
+          };
+      Environment:
+        Variables:
+          COGNITO_REGION: !Ref AWS::Region
+          USER_POOL_ID: !Ref UserPoolId
+          USER_POOL_CLIENT_ID: !Ref UserPoolClientId
+          USERS_TABLE: !Ref UsersTable
+          ENVIRONMENT: !Ref Environment
+      Timeout: 30
+      MemorySize: 256
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Service
+          Value: 'ai-recipe-generator'
+        - Key: Component
+          Value: 'profile-api'
+
+  # Lambda Function for PUT /profile
+  UpdateProfileFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'ai-recipe-update-profile-${Environment}'
+      Runtime: nodejs18.x
+      Handler: handlers/profile-handler.updateProfile
+      Role: !GetAtt ProfileLambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          exports.updateProfile = async (event) => {
+            return {
+              statusCode: 200,
+              body: JSON.stringify({ message: 'Placeholder - deploy actual code' })
+            };
+          };
+      Environment:
+        Variables:
+          COGNITO_REGION: !Ref AWS::Region
+          USER_POOL_ID: !Ref UserPoolId
+          USER_POOL_CLIENT_ID: !Ref UserPoolClientId
+          USERS_TABLE: !Ref UsersTable
+          ENVIRONMENT: !Ref Environment
+      Timeout: 30
+      MemorySize: 256
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Service
+          Value: 'ai-recipe-generator'
+        - Key: Component
+          Value: 'profile-api'
+
+  # Lambda Function for POST /profile/onboarding
+  CreateProfileFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'ai-recipe-create-profile-${Environment}'
+      Runtime: nodejs18.x
+      Handler: handlers/profile-handler.createProfileFromOnboarding
+      Role: !GetAtt ProfileLambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          exports.createProfileFromOnboarding = async (event) => {
+            return {
+              statusCode: 200,
+              body: JSON.stringify({ message: 'Placeholder - deploy actual code' })
+            };
+          };
+      Environment:
+        Variables:
+          COGNITO_REGION: !Ref AWS::Region
+          USER_POOL_ID: !Ref UserPoolId
+          USER_POOL_CLIENT_ID: !Ref UserPoolClientId
+          USERS_TABLE: !Ref UsersTable
+          ENVIRONMENT: !Ref Environment
+      Timeout: 30
+      MemorySize: 256
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Service
+          Value: 'ai-recipe-generator'
+        - Key: Component
+          Value: 'profile-api'
+
+  # API Gateway REST API
+  ProfileAPI:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub 'ai-recipe-profile-api-${Environment}'
+      Description: 'Profile Management API for AI Recipe Generator'
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Service
+          Value: 'ai-recipe-generator'
+        - Key: Component
+          Value: 'profile-api'
+
+  # API Gateway Resource: /profile
+  ProfileResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ProfileAPI
+      ParentId: !GetAtt ProfileAPI.RootResourceId
+      PathPart: 'profile'
+
+  # API Gateway Resource: /profile/onboarding
+  OnboardingResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ProfileAPI
+      ParentId: !Ref ProfileResource
+      PathPart: 'onboarding'
+
+  # GET /profile
+  GetProfileMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ProfileAPI
+      ResourceId: !Ref ProfileResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetProfileFunction.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+        - StatusCode: 401
+        - StatusCode: 404
+        - StatusCode: 500
+
+  GetProfileOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ProfileAPI
+      ResourceId: !Ref ProfileResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+
+  # PUT /profile
+  UpdateProfileMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ProfileAPI
+      ResourceId: !Ref ProfileResource
+      HttpMethod: PUT
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UpdateProfileFunction.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+        - StatusCode: 400
+        - StatusCode: 401
+        - StatusCode: 500
+
+  # POST /profile/onboarding
+  CreateProfileMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ProfileAPI
+      ResourceId: !Ref OnboardingResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CreateProfileFunction.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 201
+        - StatusCode: 400
+        - StatusCode: 401
+        - StatusCode: 500
+
+  OnboardingOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ProfileAPI
+      ResourceId: !Ref OnboardingResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+
+  # Lambda Permissions for API Gateway
+  GetProfileLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref GetProfileFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ProfileAPI}/*/GET/profile'
+
+  UpdateProfileLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref UpdateProfileFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ProfileAPI}/*/PUT/profile'
+
+  CreateProfileLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref CreateProfileFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ProfileAPI}/*/POST/profile/onboarding'
+
+  # API Gateway Deployment
+  ProfileAPIDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - GetProfileMethod
+      - UpdateProfileMethod
+      - CreateProfileMethod
+      - GetProfileOptionsMethod
+      - OnboardingOptionsMethod
+    Properties:
+      RestApiId: !Ref ProfileAPI
+      Description: !Sub 'Deployment for ${Environment} environment'
+
+  # API Gateway Stage
+  ProfileAPIStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId: !Ref ProfileAPI
+      DeploymentId: !Ref ProfileAPIDeployment
+      StageName: !Ref Environment
+      Description: !Sub 'Stage for ${Environment} environment'
+      Variables:
+        Environment: !Ref Environment
+      MethodSettings:
+        - ResourcePath: '/*'
+          HttpMethod: '*'
+          LoggingLevel: INFO
+          DataTraceEnabled: true
+          MetricsEnabled: true
+          ThrottlingBurstLimit: 100
+          ThrottlingRateLimit: 50
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Service
+          Value: 'ai-recipe-generator'
+        - Key: Component
+          Value: 'profile-api'
+
+  # CloudWatch Log Group for API Gateway
+  ProfileAPILogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/apigateway/ai-recipe-profile-api-${Environment}'
+      RetentionInDays: 14
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Service
+          Value: 'ai-recipe-generator'
+        - Key: Component
+          Value: 'profile-api'
+
+Outputs:
+  ProfileAPIId:
+    Description: 'Profile API Gateway ID'
+    Value: !Ref ProfileAPI
+    Export:
+      Name: !Sub '${AWS::StackName}-ProfileAPIId'
+
+  ProfileAPIUrl:
+    Description: 'Profile API Gateway URL'
+    Value: !Sub 'https://${ProfileAPI}.execute-api.${AWS::Region}.amazonaws.com/${Environment}'
+    Export:
+      Name: !Sub '${AWS::StackName}-ProfileAPIUrl'
+
+  UsersTableName:
+    Description: 'DynamoDB Users Table Name'
+    Value: !Ref UsersTable
+    Export:
+      Name: !Sub '${AWS::StackName}-UsersTableName'
+
+  GetProfileFunctionArn:
+    Description: 'Get Profile Lambda Function ARN'
+    Value: !GetAtt GetProfileFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-GetProfileFunctionArn'
+
+  UpdateProfileFunctionArn:
+    Description: 'Update Profile Lambda Function ARN'
+    Value: !GetAtt UpdateProfileFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-UpdateProfileFunctionArn'
+
+  CreateProfileFunctionArn:
+    Description: 'Create Profile Lambda Function ARN'
+    Value: !GetAtt CreateProfileFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-CreateProfileFunctionArn'

@@ -1,0 +1,17 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "amplify:UpdateApp",
+        "amplify:GetApp",
+        "amplify:ListApps",
+        "amplify:StartJob",
+        "amplify:GetJob",
+        "amplify:ListJobs"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

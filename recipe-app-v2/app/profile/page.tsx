@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { UserProfile, DietType, SpiceLevel, CookingGoal } from '../../types';
+import { UserProfile, DietType, SpiceLevel, CookingGoal, Appliance, CookingTime } from '../../types';
 import { apiClient } from '../../lib/api-client';
 
 export default function ProfilePage() {
@@ -178,7 +178,7 @@ export default function ProfilePage() {
                   value={editedProfile.availableAppliances?.join(', ') || ''}
                   onChange={(e) => setEditedProfile({ 
                     ...editedProfile, 
-                    availableAppliances: e.target.value.split(',').map(a => a.trim()).filter(a => a) 
+                    availableAppliances: e.target.value.split(',').map(a => a.trim()).filter(a => a) as Appliance[]
                   })}
                   placeholder="Gas stove, Microwave, Air fryer..."
                 />
@@ -191,7 +191,7 @@ export default function ProfilePage() {
                   value={editedProfile.dietaryRestrictions?.join(', ') || ''}
                   onChange={(e) => setEditedProfile({ 
                     ...editedProfile, 
-                    dietaryRestrictions: e.target.value.split(',').map(r => r.trim()).filter(r => r) 
+                    dietaryRestrictions: e.target.value.split(',').map(r => r.trim()).filter(r => r)
                   })}
                   placeholder="Gluten-free, Nut-free..."
                 />
@@ -201,7 +201,7 @@ export default function ProfilePage() {
                 <label>Usual Cooking Time</label>
                 <select
                   value={editedProfile.usualCookingTime || ''}
-                  onChange={(e) => setEditedProfile({ ...editedProfile, usualCookingTime: e.target.value })}
+                  onChange={(e) => setEditedProfile({ ...editedProfile, usualCookingTime: e.target.value as CookingTime })}
                 >
                   <option value="Under 15 min">Under 15 min</option>
                   <option value="15-30 min">15-30 min</option>

@@ -2,28 +2,62 @@ const fs = require('fs');
 const path = require('path');
 
 const outDir = path.join(__dirname, '..', 'out');
+const chunksDir = path.join(outDir, '_next', 'static', 'chunks');
+const cssDir = path.join(outDir, '_next', 'static', 'css');
+
+// Find actual chunk filenames
+function findChunk(pattern) {
+  try {
+    const files = fs.readdirSync(chunksDir);
+    const match = files.find(f => f.match(pattern));
+    return match ? `/_next/static/chunks/${match}` : null;
+  } catch (e) {
+    console.error(`Error finding chunk ${pattern}:`, e.message);
+    return null;
+  }
+}
+
+function findCSS() {
+  try {
+    const files = fs.readdirSync(cssDir);
+    const cssFile = files.find(f => f.endsWith('.css'));
+    return cssFile ? `/_next/static/css/${cssFile}` : null;
+  } catch (e) {
+    console.error('Error finding CSS:', e.message);
+    return null;
+  }
+}
+
+// Get actual chunk files
+const polyfills = findChunk(/^polyfills-.*\.js$/);
+const webpack = findChunk(/^webpack-.*\.js$/);
+const framework = findChunk(/^framework-.*\.js$/);
+const main = findChunk(/^main-[a-f0-9]+\.js$/);
+const mainApp = findChunk(/^main-app-.*\.js$/);
+const cssFile = findCSS();
+
+console.log('Found chunks:', { polyfills, webpack, framework, main, mainApp, cssFile });
 
 // Read the RSC payload files
 const pages = ['index', 'profile', 'history'];
 
-const htmlTemplate = (pageName, rscContent) => `<!DOCTYPE html>
+const htmlTemplate = (pageName) => `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AI Recipe Generator</title>
   <meta name="description" content="Generate personalized recipes with AI">
-  <link rel="stylesheet" href="/_next/static/css/c2748a8c93dea861.css">
+  ${cssFile ? `<link rel="stylesheet" href="${cssFile}">` : ''}
 </head>
 <body class="custom-cursor-area">
   <div id="__next"></div>
-  <script id="__NEXT_DATA__" type="application/json">${JSON.stringify({ props: { pageProps: {} }, page: `/${pageName === 'index' ? '' : pageName}`, query: {}, buildId: 'development', isFallback: false, gssp: false, appGip: true })}</script>
-  <script src="/_next/static/chunks/polyfills-42372ed130431b0a.js" nomodule=""></script>
-  <script src="/_next/static/chunks/webpack-c105cf7135d99ba2.js" async=""></script>
-  <script src="/_next/static/chunks/framework-f66176bb897dc684.js" async=""></script>
-  <script src="/_next/static/chunks/main-a458838a97bdf9bf.js" async=""></script>
-  <script src="/_next/static/chunks/pages/_app-72b849fbd24ac258.js" async=""></script>
-  <script src="/_next/static/chunks/main-app-6360976916f6eb7d.js" async=""></script>
+  <script id="__NEXT_DATA__" type="application/json">{"props":{"pageProps":{}},"page":"/${pageName === 'index' ? '' : pageName}","query":{},"buildId":"production","isFallback":false,"gssp":false,"appGip":true}</script>
+  ${polyfills ? `<script src="${polyfills}" nomodule=""></script>` : ''}
+  ${webpack ? `<script src="${webpack}" async=""></script>` : ''}
+  ${framework ? `<script src="${framework}" async=""></script>` : ''}
+  ${main ? `<script src="${main}" async=""></script>` : ''}
+  ${mainApp ? `<script src="${mainApp}" async=""></script>` : ''}
 </body>
 </html>`;
 
@@ -32,10 +66,22 @@ pages.forEach(pageName => {
   const htmlFile = path.join(outDir, `${pageName}.html`);
   
   if (fs.existsSync(txtFile)) {
-    const rscContent = fs.readFileSync(txtFile, 'utf-8');
-    const html = htmlTemplate(pageName, rscContent);
+    const html = htmlTemplate(pageName);
     fs.writeFileSync(htmlFile, html);
     console.log(`Generated ${pageName}.html`);
+  }
+});
+
+// Also generate for subdirectories
+['profile', 'history'].forEach(pageName => {
+  const subDir = path.join(outDir, pageName);
+  const txtFile = path.join(subDir, 'index.txt');
+  const htmlFile = path.join(subDir, 'index.html');
+  
+  if (fs.existsSync(txtFile)) {
+    const html = htmlTemplate(pageName);
+    fs.writeFileSync(htmlFile, html);
+    console.log(`Generated ${pageName}/index.html`);
   }
 });
 

@@ -8,11 +8,13 @@ class APIError extends Error {
 }
 
 class APIClient {
-  private baseURL: string;
+  private authBaseURL: string;
+  private recipeBaseURL: string;
   private token: string | null = null;
 
   constructor() {
-    this.baseURL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || '';
+    this.authBaseURL = process.env.NEXT_PUBLIC_AUTH_API_URL || '';
+    this.recipeBaseURL = process.env.NEXT_PUBLIC_RECIPE_API_URL || '';
   }
 
   setToken(token: string) {
@@ -21,7 +23,8 @@ class APIClient {
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    useRecipeAPI: boolean = false
   ): Promise<T> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -35,7 +38,8 @@ class APIClient {
       headers['Authorization'] = `Bearer ${this.token}`;
     }
 
-    const response = await fetch(`${this.baseURL}${endpoint}`, {
+    const baseURL = useRecipeAPI ? this.recipeBaseURL : this.authBaseURL;
+    const response = await fetch(`${baseURL}${endpoint}`, {
       ...options,
       headers,
     });
@@ -82,24 +86,24 @@ class APIClient {
     if (filters?.mealType) params.append('mealType', filters.mealType);
     
     const query = params.toString();
-    return this.request<Recipe[]>(`/recipes${query ? `?${query}` : ''}`);
+    return this.request<Recipe[]>(`/recipes${query ? `?${query}` : ''}`, {}, true);
   }
 
   async getRecipe(recipeId: string): Promise<Recipe> {
-    return this.request<Recipe>(`/recipes/${recipeId}`);
+    return this.request<Recipe>(`/recipes/${recipeId}`, {}, true);
   }
 
   async toggleFavorite(recipeId: string, isFavorite: boolean): Promise<Recipe> {
     return this.request<Recipe>(`/recipes/${recipeId}/favorite`, {
       method: 'PUT',
       body: JSON.stringify({ isFavorite }),
-    });
+    }, true);
   }
 
   async deleteRecipe(recipeId: string): Promise<void> {
     return this.request<void>(`/recipes/${recipeId}`, {
       method: 'DELETE',
-    });
+    }, true);
   }
 
   // Recipe generation
@@ -107,7 +111,7 @@ class APIClient {
     return this.request<Recipe>('/generate-recipe', {
       method: 'POST',
       body: JSON.stringify(request),
-    });
+    }, true); // Use recipe API
   }
 }
 

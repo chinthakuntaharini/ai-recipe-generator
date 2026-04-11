@@ -79,7 +79,7 @@ export default function RecipeHistoryPage() {
   };
 
   const getUniqueMealTypes = (): string[] => {
-    const mealTypes = recipes.map(r => r.mealType).filter((m): m is string => Boolean(m));
+    const mealTypes = recipes.map(r => r.mealType).filter((m): m is NonNullable<typeof m> => Boolean(m));
     return Array.from(new Set(mealTypes)).sort();
   };
 

@@ -56,9 +56,9 @@ jobs:
       
       - name: Invalidate CloudFront cache
         run: |
-          aws cloudfront create-invalidation --distribution-id E3BFO3SCL6BTSX --paths "/*"
+          aws cloudfront create-invalidation --distribution-id E36TCA42M4AD0E --paths "/*"
       
       - name: Deployment complete
         run: |
           echo "Deployment successful!"
-          echo "CloudFront URL: https://d58uxuh1bkppb.cloudfront.net"
+          echo "CloudFront URL: https://drc8edj3v9lkf.cloudfront.net"
